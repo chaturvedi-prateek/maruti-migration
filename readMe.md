@@ -1,7 +1,7 @@
-nohup env DSYNCT_MODE=simple $DSYNCT \
+``` nohup $DSYNCT \
   --host-port=0.0.0.0:8081 \
   sync \
   --save-file resume-reverse.file \
-  --reverse \
-  "$DOCDB_SRC" "$MDB_DEST" \
-  > dsynct-<env>-reverse.log 2>&1 &
+  --skip-initial-sync \
+  "$MDB_DEST" "$DOCDB_SRC" \
+  > dsynct-reverse.log 2>&1 & ```
