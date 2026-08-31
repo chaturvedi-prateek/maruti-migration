@@ -1,4 +1,5 @@
-``` db.email_log.createIndex(
+```
+db.email_log.createIndex(
   { toAddress: "text" },
   {
     name: "toAddress_text",
