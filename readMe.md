@@ -2,7 +2,8 @@
 cd /opt/docdb-migration/compose
 docker compose exec -T temporal temporal workflow describe --workflow-id svoc-cold/bulk-4 -o json </dev/null \
   | jq '{status: (.workflowExecutionInfo // .executionInfo // {}).status,
-         act447: [.pendingActivities[]? | select(.activityId=="447") | {state, attempt, lastFailure: .lastFailure.message, lastHeartbeatTime}]}'
+         act447: [.pendingActivities[]? | select(.activityId=="447") |
+{state, attempt, lastFailure: .lastFailure.message, lastHeartbeatTime}]}'
 
 (
 set -uo pipefail
