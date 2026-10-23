@@ -1,35 +1,21 @@
 ```
-use verify_meta
+use svoc-db
 
-// One of the 10 currently-stuck partition tasks, with real bounds
-const t = db.verification_tasks.findOne(
-  {
-    type: "verifyDocuments",
-    status: "processing",
-    "query_filter.partition._id.lowerBound": { $not: { $type: "minKey" } },
-    "query_filter.partition.upperBound": { $not: { $type: "maxKey" } }
-  },
-  { "query_filter.namespace": 1, "query_filter.partition": 1 }
-)
+const lower = ObjectId("654cdc1694c0a266403f5fe8")
+const upper = ObjectId("654cdfa994c0a266405b2d4b")
+const coll  = db.getCollection("customer_enquiry")
+Query 1 – what migration-verifier sends:
+const v = coll.find({ $and: [
+  { $expr: { $gte: ["$_id", { $literal: lower }] } },
+  { $expr: { $lte: ["$_id", { $literal: upper }] } }
+]}).sort({ _id: 1 }).hint({ _id: 1 }).limit(100).explain("executionStats")
 
-print(t.query_filter.namespace)
-print(EJSON.stringify({
-  lower: t.query_filter.partition._id.lowerBound,
-  upper: t.query_filter.partition.upperBound
-}))
+printjson(v.queryPlanner.winningPlan)
+printjson({ plannerVersion: v.queryPlanner.plannerVersion, executionTimeMillis: v.executionStats.executionTimeMillis, nReturned: v.executionStats.nReturned })
+Query 2 – what dsync sends:
+const d = coll.find({ _id: { $gt: lower, $lte: upper } })
+  .limit(100).explain("executionStats")
 
-use svoc-db 
-
-const b = EJSON.parse('')
-const coll = db.getCollection("customer_srv") 
-
-// What migration-verifier sends
-printjson(coll.find({ $and: [
-  { $expr: { $gte: ["$_id", { $literal: b.lower }] } },
-  { $expr: { $lte: ["$_id", { $literal: b.upper }] } }
-]}).sort({ _id: 1 }).hint({ _id: 1 }).limit(100).explain("executionStats"))
-
-// What dsync sends
-printjson(coll.find({ _id: { $gt: b.lower, $lte: b.upper } })
-  .limit(100).explain("executionStats"))
+printjson(d.queryPlanner.winningPlan)
+printjson({ plannerVersion: d.queryPlanner.plannerVersion, executionTimeMillis: d.executionStats.executionTimeMillis, nReturned: d.executionStats.nReturned })
  ```
