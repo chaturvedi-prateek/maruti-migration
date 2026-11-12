@@ -1,20 +1,17 @@
 ```
 for wf in svoc-hot svoc-cold; do
-  printf '\n=== %s: current execution ===\n' "$wf"
+  /opt/docdb-migration/helpers/dsync-progress.sh \
+    --compose-dir /opt/docdb-migration/compose \
+    --workflow-id "$wf" --interval 60
 
-  docker exec compose-temporal-1 \
-    temporal workflow describe --workflow-id "$wf" -o json |
-    jq '{
-      status: .workflowExecutionInfo.status,
-      runId: .workflowExecutionInfo.execution.runId,
-      startTime: .workflowExecutionInfo.startTime,
-      pendingChildren: [.pendingChildren[]?.workflowId],
-      activityTypes: [.pendingActivities[]?.activityType.name]
-    }'
-
-  printf '\n=== %s: workflow tree ===\n' "$wf"
-
-  docker exec compose-temporal-1 \
-    temporal workflow list --query "RootWorkflowId='$wf'"
+  /opt/docdb-migration/helpers/dsync-find-pauses.sh \
+    --compose-dir /opt/docdb-migration/compose \
+    --workflow-id "$wf"
 done
+
+curl --fail --silent --show-error --max-time 30 \
+  http://127.0.0.1:27020/api/v1/progress | jq .
+
+curl --fail --silent --show-error --max-time 30 \
+  http://127.0.0.1:27020/api/v1/summary | jq .
  ```
